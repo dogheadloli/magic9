@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>strategy.py — analytics</title>
+    <style>
+        * { box-sizing: border-box; }
+        html, body { margin: 0; height: 100%; }
+        body {
+            background: #1e1e1e; color: #d4d4d4; height: 100vh;
+            display: flex; flex-direction: column; overflow: hidden;
+            font-family: Consolas, "Cascadia Code", Menlo, monospace; font-size: 13px;
+        }
+        /* 标题栏 */
+        .titlebar {
+            height: 34px; background: #323233; display: flex; align-items: center;
+            padding: 0 10px; gap: 10px; flex: 0 0 34px; border-bottom: 1px solid #1b1b1b;
+        }
+        .dots { display: flex; gap: 7px; }
+        .dots i { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+        .dots .r { background: #ff5f56; } .dots .y { background: #ffbd2e; } .dots .g { background: #27c93f; }
+        .title-mid { flex: 1; text-align: center; color: #9da0a6; font-size: 12px; }
+        .badge { font-size: 11px; color: #8a8d93; border: 1px solid #3d3d40; border-radius: 4px; padding: 1px 6px; }
+
+        .main { flex: 1 1 auto; display: flex; min-height: 0; }
+        /* 活动栏 */
+        .activity { width: 48px; background: #333333; display: flex; flex-direction: column; align-items: center; padding-top: 8px; gap: 14px; color: #858585; }
+        .activity .ic { font-size: 18px; cursor: default; }
+        .activity .ic.active { color: #fff; border-left: 2px solid #007acc; padding-left: 0; }
+        /* 资源管理器 */
+        .sidebar { width: 210px; background: #252526; color: #cccccc; padding: 8px 0; overflow: auto; flex: 0 0 210px; }
+        .sb-title { font-size: 11px; color: #8a8d93; padding: 4px 14px; letter-spacing: .5px; }
+        .tree div { padding: 3px 14px; white-space: nowrap; color: #c5c8cc; }
+        .tree .f { color: #9cdcfe; }
+        .tree .active { background: #37373d; }
+        .tree .dir { color: #d7d7d7; }
+
+        .center { flex: 1 1 auto; display: flex; flex-direction: column; min-width: 0; }
+        .tabs { height: 35px; background: #2d2d2d; display: flex; align-items: stretch; flex: 0 0 35px; }
+        .tab { display: flex; align-items: center; gap: 8px; padding: 0 14px; background: #1e1e1e; color: #d4d4d4; border-right: 1px solid #252526; font-size: 12px; }
+        .tab .dot { width: 7px; height: 7px; border-radius: 50%; background: #d4d4d4; }
+        .tab.inactive { background: #2d2d2d; color: #8a8d93; }
+
+        .edit-term { flex: 1 1 auto; display: flex; flex-direction: column; min-height: 0; }
+        .editor { flex: 1 1 auto; overflow: auto; padding: 8px 0; line-height: 1.5; }
+        .ln-row { display: flex; }
+        .ln { width: 48px; min-width: 48px; text-align: right; padding-right: 16px; color: #6e7681; user-select: none; }
+        .ln-row .src { white-space: pre; }
+        .kw { color: #569cd6; } .str { color: #ce9178; } .num { color: #b5cea8; }
+        .cmt { color: #6a9955; } .fn { color: #dcdcaa; } .ty { color: #4ec9b0; }
+
+        /* 终端 */
+        .panel { height: 168px; flex: 0 0 168px; background: #181818; border-top: 1px solid #2b2b2b; display: flex; flex-direction: column; }
+        .panel-tabs { height: 28px; display: flex; align-items: center; gap: 16px; padding: 0 14px; color: #8a8d93; font-size: 11px; border-bottom: 1px solid #2b2b2b; }
+        .panel-tabs .on { color: #e6e6e6; border-bottom: 1px solid #e6e6e6; padding-bottom: 4px; }
+        .term { flex: 1; overflow: auto; padding: 6px 14px; line-height: 1.55; white-space: pre-wrap; }
+        .term .prompt { color: #569cd6; }
+        .term .ok { color: #6a9955; }
+        .term .note { color: #d7ba7d; }
+        .term .dim { color: #6e7681; }
+
+        /* AI 面板 */
+        .ai { width: 300px; flex: 0 0 300px; background: #1f1f1f; border-left: 1px solid #2b2b2b; display: flex; flex-direction: column; }
+        .ai-h { height: 35px; display: flex; align-items: center; padding: 0 12px; color: #cfcfcf; font-size: 12px; border-bottom: 1px solid #2b2b2b; gap: 6px; }
+        .ai-body { flex: 1; overflow: auto; padding: 12px; }
+        .bubble { background: #2a2d2e; border: 1px solid #333; border-radius: 8px; padding: 10px; color: #d4d4d4; font-size: 12px; line-height: 1.5; font-family: -apple-system, "Segoe UI", sans-serif; }
+        .bubble .role { color: #4ec9b0; font-size: 11px; margin-bottom: 6px; }
+        .bubble code { background: #1e1e1e; padding: 1px 5px; border-radius: 4px; color: #ce9178; }
+        .ai-input { margin: 10px; border: 1px solid #3a3a3a; border-radius: 8px; padding: 8px 10px; color: #6e7681; font-size: 12px; font-family: -apple-system, sans-serif; }
+
+        /* 状态栏 */
+        .statusbar { height: 22px; flex: 0 0 22px; background: #007acc; color: #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; font-size: 11px; }
+        .statusbar .l, .statusbar .r { display: flex; gap: 14px; align-items: center; }
+    </style>
+</head>
+<body>
+<div class="titlebar">
+    <div class="dots"><i class="r"></i><i class="y"></i><i class="g"></i></div>
+    <div class="title-mid">strategy.py — analytics</div>
+    <span class="badge">⚡ AI</span>
+</div>
+
+<div class="main">
+    <div class="activity">
+        <span class="ic active">▥</span>
+        <span class="ic">⌕</span>
+        <span class="ic">⎇</span>
+        <span class="ic">▷</span>
+        <span class="ic">✦</span>
+    </div>
+
+    <div class="sidebar">
+        <div class="sb-title">EXPLORER</div>
+        <div class="tree">
+            <div class="dir">▾ analytics</div>
+            <div class="f" style="padding-left:28px">pipeline.py</div>
+            <div class="f" style="padding-left:28px">indicators.py</div>
+            <div class="f" style="padding-left:28px">analyzer.py</div>
+            <div class="f active" style="padding-left:28px">strategy.py</div>
+            <div class="f" style="padding-left:28px">utils.py</div>
+            <div class="dir">▸ tests</div>
+            <div class="f">requirements.txt</div>
+            <div class="f">README.md</div>
+        </div>
+    </div>
+
+    <div class="center">
+        <div class="tabs">
+            <div class="tab"><span class="dot"></span>strategy.py</div>
+            <div class="tab inactive">indicators.py</div>
+            <div class="tab inactive">analyzer.py</div>
+        </div>
+        <div class="edit-term">
+            <div class="editor" id="editor"></div>
+            <div class="panel">
+                <div class="panel-tabs">
+                    <span class="on">TERMINAL</span><span>OUTPUT</span><span>PROBLEMS</span><span>DEBUG CONSOLE</span>
+                </div>
+                <div class="term" id="term"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="ai">
+        <div class="ai-h">✦ AI Assistant</div>
+        <div class="ai-body">
+            <div class="bubble">
+                <div class="role">assistant</div>
+                <div id="aiMsg">Synced market snapshot and re-ran the pipeline.</div>
+            </div>
+        </div>
+        <div class="ai-input">Ask anything · ⌘K …</div>
+    </div>
+</div>
+
+<div class="statusbar">
+    <div class="l"><span>⎇ main*</span><span id="sbProblems">✓ 0&nbsp;&nbsp;⚠ 0</span></div>
+    <div class="r"><span id="sbSig">no diagnostics</span><span id="symbols">0 symbols</span><span>Python 3.11.6</span><span>UTF-8</span><span>LF</span><span id="clock">⟳ --:--:--</span></div>
+</div>
+
+<script src="ide.js"></script>
+</body>
+</html>

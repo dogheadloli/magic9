@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>买卖分析 · 神奇九转</title>
+    <link rel="stylesheet" href="styles.css"/>
+    <script src="vendor/klinecharts.min.js"></script>
+</head>
+<body>
+<header class="topbar">
+    <div class="brand">买卖分析</div>
+    <div class="actions">
+        <span id="status" class="status"></span>
+        <a class="navlink" href="index.html">← 返回控制台</a>
+    </div>
+</header>
+
+<main class="layout">
+    <aside class="an-left" style="flex:0 0 560px;">
+        <div class="card" style="display:flex;flex-direction:column;min-height:0;flex:1 1 auto;">
+            <h3>低9信号 · 历史复盘 <span id="revStats" class="muted" style="font-weight:400"></span></h3>
+            <div class="signal-list-wrap" style="flex:1 1 auto;">
+                <table class="tbl">
+                    <thead>
+                    <tr>
+                        <th>信号日</th><th>代码</th><th>名称</th><th>评分</th>
+                        <th>结果</th><th>收益%</th><th>持有</th><th>命中要素</th>
+                    </tr>
+                    </thead>
+                    <tbody id="revBody">
+                    <tr><td class="muted" colspan="8">加载中…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="pager">
+                <button id="revPrev" class="btn btn-mini">上一页</button>
+                <span id="revInfo" class="muted"></span>
+                <button id="revNext" class="btn btn-mini">下一页</button>
+            </div>
+        </div>
+    </aside>
+
+    <section class="panel an-right">
+        <div class="chart-head">
+            <h2 id="chartTitle">K线图</h2>
+            <span class="legend">
+                <i class="dot buy"></i>低9买点 &nbsp;
+                <i class="dot low9"></i>止盈 &nbsp;
+                <i class="dot high9"></i>止损/到期
+            </span>
+        </div>
+        <div id="kline" class="kline"></div>
+        <div id="chartHint" class="hint">点击左侧任一信号，在K线上查看标注</div>
+    </section>
+</main>
+
+<section class="panel an-table-wrap signal-panel" style="flex:0 0 280px;">
+    <div class="signal-head">
+        <h2>我的持仓 / 记账</h2>
+        <span id="jSummary" class="muted"></span>
+    </div>
+    <form id="jForm" class="add-form" style="flex-wrap:wrap; gap:6px;">
+        <input id="jCode" maxlength="6" placeholder="代码" style="width:90px"/>
+        <input id="jDate" type="date" title="进场日" style="width:140px"/>
+        <input id="jEntry" placeholder="进场价" style="width:80px"/>
+        <input id="jQty" placeholder="数量(股)" style="width:90px"/>
+        <input id="jStop" placeholder="止损" style="width:80px"/>
+        <input id="jTarget" placeholder="目标" style="width:80px"/>
+        <input id="jLatest" type="date" title="最晚了结" style="width:140px"/>
+        <button class="btn" type="submit">建仓</button>
+    </form>
+    <div class="signal-list-wrap">
+        <table class="tbl">
+            <thead>
+            <tr>
+                <th>代码</th><th>名称</th><th>进场日</th><th>进场价</th><th>数量</th>
+                <th>止损</th><th>目标</th><th>现价/出场</th><th>盈亏</th><th>收益%</th><th>状态</th><th>操作</th>
+            </tr>
+            </thead>
+            <tbody id="jBody">
+            <tr><td class="muted" colspan="12">暂无持仓记录</td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<script src="analysis.js"></script>
+</body>
+</html>
