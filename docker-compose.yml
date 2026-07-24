@@ -1,0 +1,25 @@
+# 生产 / 服务器部署：应用容器化，MySQL 默认连宿主机（不迁库）
+# 用法：
+#   cp .env.example .env 并填写密钥
+#   IMAGE_TAG=abc1234 docker compose pull && docker compose up -d
+services:
+  app:
+    image: ${DOCKER_IMAGE:-stock-monitor}:${IMAGE_TAG:-latest}
+    container_name: stock-monitor
+    restart: unless-stopped
+    ports:
+      - "${SERVER_PORT:-8964}:8964"
+    env_file:
+      - .env
+    environment:
+      # 覆盖容器内连库地址：指向宿主机 MySQL（Linux Docker 20.10+）
+      DB_URL: ${DB_URL:-jdbc:mysql://host.docker.internal:3306/stock?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true}
+      SERVER_PORT: "8964"
+      JAVA_OPTS: "${JAVA_OPTS:--Xms256m -Xmx512m}"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"

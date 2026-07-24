@@ -1,13 +1,13 @@
 server:
-  port: 8964
+  port: ${SERVER_PORT:8964}
 
 spring:
   application:
     name: stock-monitor
   datasource:
-    url: jdbc:mysql://localhost:3306/stock?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true
-    username: root
-    password: ""
+    url: ${DB_URL:jdbc:mysql://localhost:3306/stock?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true}
+    username: ${DB_USER:root}
+    password: ${DB_PASS:}
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
@@ -18,7 +18,7 @@ spring:
         dialect: org.hibernate.dialect.MySQL8Dialect
         format_sql: false
     show-sql: false
-  # 邮件SMTP（仅在配置 host 后才创建 JavaMailSender；以QQ邮箱为例，授权码放环境变量 MAIL_PASS）
+  # 邮件 SMTP：密码等敏感项只从环境变量读取，勿写入仓库
   mail:
     host: ${MAIL_HOST:smtp.qq.com}
     port: ${MAIL_PORT:465}
@@ -90,22 +90,21 @@ alert:
     - WECOM
     - CONSOLE
     - EMAIL
-  wecom-webhook-key: ${WECOM_KEY:}      # 环境变量注入，勿入库/入仓
+  wecom-webhook-key: ${WECOM_KEY:}
   wecom-webhook-url: https://qyapi.weixin.qq.com/cgi-bin/webhook/send
   cooldown-days: 1
-  # 邮件渠道：SMTP 服务器见上方 spring.mail.*；下面填收发件人
-  email-from: ${MAIL_USER:}    # 留空则用 spring.mail.username
+  email-from: ${MAIL_FROM:${MAIL_USER:}}
   email-to:
-    - ${MAIL_TO:}              # 收件人，可配多个
+    - ${MAIL_TO:}
   email-subject-prefix: "[选股预警]"
 
-# AI 情感分析（DeepSeek）。设 enabled=true 并填 api-key 后启用；否则新闻只入库不判情感。
+# AI 情感分析（DeepSeek）。enabled=true 且配置 DEEPSEEK_API_KEY 后启用
 ai:
   deepseek:
-    enabled: true
-    base-url: https://api.deepseek.com
-    api-key: ${DEEPSEEK_API_KEY:}  # 环境变量注入，勿入库/入仓
-    model: deepseek-v4-flash       # 受支持: deepseek-v4-flash / deepseek-v4-pro
+    enabled: ${AI_ENABLED:false}
+    base-url: ${DEEPSEEK_BASE_URL:https://api.deepseek.com}
+    api-key: ${DEEPSEEK_API_KEY:}
+    model: ${DEEPSEEK_MODEL:deepseek-v4-flash}
 
 logging:
   level:

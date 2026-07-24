@@ -8,21 +8,54 @@
 - JDK 8（本机：Temurin 1.8.0_492）
 - Maven 3.9+
 - MySQL（`localhost:3306`，库 `stock` 启动时自动创建）
+- （可选）Docker / Docker Compose，用于容器化部署
 
 > 因本机仅有 JDK 8，采用 Spring Boot 2.7.18（最后一个支持 Java 8 的版本）。
 > 后续若升级到 JDK 17，可平滑切换到 Spring Boot 3.x。
 
-## 运行
+敏感配置（数据库密码、邮件授权码、企微 Key、DeepSeek Key）通过环境变量注入，见 `.env.example`，**不要写入仓库**。
+
+## 运行（本地）
 
 ```bash
 # Windows PowerShell（已配置 JAVA_HOME / MAVEN_HOME）
 $env:Path = "$env:JAVA_HOME\bin;$env:MAVEN_HOME\bin;" + $env:Path
+# 按需设置密钥，例如：$env:DB_PASS="..."; $env:MAIL_PASS="..."; $env:AI_ENABLED="true"; $env:DEEPSEEK_API_KEY="..."
 mvn -DskipTests spring-boot:run
 ```
 
-服务端口：`8089`（`application.yml` 可改）。
+服务端口：`8964`（可用环境变量 `SERVER_PORT` 覆盖）。
 
-启动后打开 Web 控制台：**http://localhost:8089**
+启动后打开 Web 控制台：**http://localhost:8964**
+
+### 本地 Docker（可选）
+
+```bash
+cp .env.example .env   # 填写 DB_PASS 等；本地连本机 MySQL 保持 host.docker.internal
+docker build -t stock-monitor:local .
+# 临时改 .env：DOCKER_IMAGE=stock-monitor  IMAGE_TAG=local
+docker compose up -d
+```
+
+## CI/CD：GitLab + Jenkins + Docker（无 K8s）
+
+```
+git push → GitLab
+  → Jenkins：docker build（含 mvn）→ push 镜像仓库
+  → SSH 部署机：docker compose pull && up -d
+```
+
+| 文件 | 作用 |
+|------|------|
+| `Dockerfile` | 多阶段构建 jar + 运行镜像 |
+| `docker-compose.yml` | 服务器跑应用（MySQL 仍用宿主机） |
+| `Jenkinsfile` | 构建 / 推送 / 远程部署 |
+| `.env.example` | 环境变量模板 |
+| `deploy/README.md` | 服务器初始化与 Jenkins 凭据说明 |
+
+**首次**：按 [`deploy/README.md`](deploy/README.md) 在服务器准备 `/opt/stock`（`docker-compose.yml` + `.env`），配置 Jenkins 凭据与 `DOCKER_IMAGE` / `DEPLOY_*`，GitLab Webhook 指向 Jenkins。
+
+**日常**：合并到 `main`/`master` 后由 Jenkins 自动发布，无需登录服务器。看运行日志可用 Portainer，或临时 `docker compose logs -f app`。
 
 ## 数据源
 
@@ -77,7 +110,7 @@ mvn -DskipTests spring-boot:run
 
 ### M4 — Web 控制台
 
-访问 **http://localhost:8089**（前端为单页原生 JS + klinecharts，已本地化于 `static/vendor/`，Spring Boot 托管，无需单独前端服务）：
+访问 **http://localhost:8964**（前端为单页原生 JS + klinecharts，已本地化于 `static/vendor/`，Spring Boot 托管，无需单独前端服务）：
 
 - **自选股管理**（左栏）：添加（自动补全名称并回补日K）、启用/停用、删除；点击代码/名称查看其K线。
 - **K线图**（中栏）：日K蜡烛图 + MA20/MA60 + 成交量 + MACD 副图；叠加标注 **低9/高9**（神奇九转）与 **抄底/逃顶信号**（★为强信号）。
@@ -88,7 +121,7 @@ mvn -DskipTests spring-boot:run
 
 ### 隐蔽行情看板（摸鱼模式）
 
-访问 **http://localhost:8089/quiet.html**：伪装成普通行情列表的极简页面。
+访问 **http://localhost:8964/quiet.html**：伪装成普通行情列表的极简页面。
 
 - 表格列：名称 / 代码 / 当前 / 涨跌 / 涨跌幅，**纯色无涨跌红绿**（低调）。
 - 底部状态栏：左「最后刷新 HH:mm:ss」，右「最后信号 MM-DD HH:mm 类型（代码）」。
@@ -101,7 +134,7 @@ mvn -DskipTests spring-boot:run
 
 ### 深度伪装：IDE / AI 编程工具（摸鱼 Pro）
 
-访问 **http://localhost:8089/ide.html**：整页伪装成 VS Code / Cursor 风格的代码编辑器。
+访问 **http://localhost:8964/ide.html**：整页伪装成 VS Code / Cursor 风格的代码编辑器。
 
 - 标题栏 + 文件树 + 代码标签页 + 行号 + Python 语法高亮 + 底部终端 + 右侧 AI 对话 + 蓝色状态栏，乍看就是在写代码。
 - **自选股行情** → 渲染成"自动生成的代码数据" `SNAPSHOT = { "600519": 1206.70, # 贵州茅台 -0.08% ... }`。

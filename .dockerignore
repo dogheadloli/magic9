@@ -1,0 +1,16 @@
+.git
+.idea
+.vscode
+target
+*.iml
+*.log
+*.md
+.env
+.env.*
+!.env.example
+backups
+backtest-*.json
+deploy
+Jenkinsfile
+**/application-local.yml
+**/application-secret.yml
