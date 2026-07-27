@@ -123,10 +123,12 @@ public class ExitStrategyComparisonService {
         int hold = strategyProperties.getTradePlan().getHoldTradingDays();
         int available = bars.size() - 1 - idx;
         int last = Math.min(idx + hold, bars.size() - 1);
+        double hardStop = hardStopPrice(stop);
         for (int k = idx + 1; k <= last; k++) {
             BarIndicator bar = bars.get(k);
-            if (bar.getLow() <= stop) {
-                return closed("SL", bar, stop, entry, k - idx);
+            if (bar.getLow() <= hardStop) {
+                double exit = bar.getOpen() <= hardStop ? bar.getOpen() : hardStop;
+                return closed("SL", bar, exit, entry, k - idx);
             }
             double target = dynamicTarget(bar, fallbackTarget);
             if (bar.getHigh() >= target) {
@@ -151,12 +153,14 @@ public class ExitStrategyComparisonService {
         double highestClose = entry;
         double trailingStop = entry;
         BarIndicator firstExitBar = null;
+        double hardStop = hardStopPrice(stop);
 
         for (int k = idx + 1; k <= last; k++) {
             BarIndicator bar = bars.get(k);
             if (!halfSold) {
-                if (bar.getLow() <= stop) {
-                    return closed("SL", bar, stop, entry, k - idx);
+                if (bar.getLow() <= hardStop) {
+                    double exit = bar.getOpen() <= hardStop ? bar.getOpen() : hardStop;
+                    return closed("SL", bar, exit, entry, k - idx);
                 }
                 double target = dynamicTarget(bar, fallbackTarget);
                 if (bar.getHigh() >= target) {
@@ -286,6 +290,10 @@ public class ExitStrategyComparisonService {
 
     private double dynamicTarget(BarIndicator bar, double fallback) {
         return positive(bar.getMa20()) ? bar.getMa20() : fallback;
+    }
+
+    private double hardStopPrice(double stop) {
+        return stop * (1 - strategyProperties.getTradePlan().getHardStopBelowPct() / 100d);
     }
 
     private double nextTrailingStop(double entry, double highestClose, Double atr) {

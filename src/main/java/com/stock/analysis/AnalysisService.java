@@ -96,7 +96,8 @@ public class AnalysisService {
             double price = lastBar.getClose();
             if (s.getStopPrice() != null && price > 0) {
                 d.setDistToStopPct(round((price - s.getStopPrice()) / price * 100));
-                d.setBrokeStop(price <= s.getStopPrice());
+                double hardStop = hardStopPrice(s.getStopPrice());
+                d.setBrokeStop(price <= hardStop);
             }
             if (s.getTargetPrice() != null && price > 0) {
                 d.setDistToTargetPct(round((s.getTargetPrice() - price) / price * 100));
@@ -127,7 +128,9 @@ public class AnalysisService {
         return sb.toString();
     }
 
-    /** 历史逐笔复盘：所有低9买点，用其交易计划（ATR×1.5止损/回MA20止盈/最多持N日）模拟结果。 */
+    /**
+     * 历史逐笔复盘：日K无法还原连续一小时软止损，只模拟硬止损、回MA20止盈和到期退出。
+     */
     public HistoryReport history(String code) {
         HistoryReport rep = new HistoryReport();
         rep.setCode(code);
@@ -237,7 +240,7 @@ public class AnalysisService {
         return t;
     }
 
-    /** 进场后 1..hold 根内：先判止损，再判是否回到 MA20 止盈；到期按收盘了结。 */
+    /** 进场后 1..hold 根内：先判硬止损，再判是否回到 MA20 止盈；到期按收盘了结。 */
     private void simulate(List<BarIndicator> bars, int idx, int hold, TradeDetail t) {
         int n = bars.size();
         double entry = bars.get(idx).getClose();
@@ -251,8 +254,10 @@ public class AnalysisService {
         int last = Math.min(idx + hold, n - 1);
         for (int k = idx + 1; k <= last; k++) {
             BarIndicator b = bars.get(k);
-            if (stop != null && b.getLow() <= stop) {
-                fill(t, b.getTradeDate(), stop, "SL", entry, k - idx);
+            double hardStop = stop == null ? Double.NaN : hardStopPrice(stop);
+            if (stop != null && b.getLow() <= hardStop) {
+                double exit = b.getOpen() <= hardStop ? b.getOpen() : hardStop;
+                fill(t, b.getTradeDate(), exit, "SL", entry, k - idx);
                 return;
             }
             Double ma20 = b.getMa20();
@@ -282,5 +287,9 @@ public class AnalysisService {
 
     private static double round(double v) {
         return Math.round(v * 100d) / 100d;
+    }
+
+    private double hardStopPrice(double stop) {
+        return stop * (1 - props.getTradePlan().getHardStopBelowPct() / 100d);
     }
 }

@@ -13,6 +13,8 @@ import com.stock.signal.SignalType;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -130,6 +132,49 @@ public class TradeTrackService {
         return result;
     }
 
+    /**
+     * 仅修复现有止损记录：用已定稿日K的收盘价跌破原止损价作为止损条件。
+     * 未在收盘确认止损的记录继续判断后续止盈、到期或恢复为 OPEN。
+     */
+    public RebuildResult repairExistingStopLossesByClose() {
+        List<SignalTradeTrack> stopLossTracks =
+                trackRepository.findByStatusOrderBySignalDateAsc(TradeTrackStatus.SL);
+        Map<String, IndicatorSeries> seriesCache = new HashMap<>();
+        int open = 0, tp = 0, sl = 0, time = 0;
+        for (SignalTradeTrack track : stopLossTracks) {
+            SignalRecord signal = signalRepository.findById(track.getSignalId()).orElse(null);
+            if (signal == null) {
+                log.warn("跳过收盘止损修复：信号不存在 signalId={}", track.getSignalId());
+                sl++;
+                continue;
+            }
+            reset(track, signal);
+            IndicatorSeries series = seriesCache.computeIfAbsent(
+                    signal.getCode(), indicatorService::compute);
+            apply(track, evaluator.evaluateWithCloseStop(track, series));
+            if (track.getStatus() == TradeTrackStatus.OPEN) {
+                track.setExitNotified(false);
+                track.setNotifyChannel(null);
+                open++;
+            } else {
+                track.setExitNotified(true);
+                track.setNotifyChannel("REPAIRED_CLOSE");
+                if (track.getStatus() == TradeTrackStatus.TP) {
+                    tp++;
+                } else if (track.getStatus() == TradeTrackStatus.SL) {
+                    sl++;
+                } else {
+                    time++;
+                }
+            }
+            trackRepository.save(track);
+        }
+        RebuildResult result = new RebuildResult(stopLossTracks.size(), open, tp, sl, time);
+        log.info("历史止损按收盘价修复完成 total={} open={} tp={} sl={} time={}",
+                stopLossTracks.size(), open, tp, sl, time);
+        return result;
+    }
+
     /** 盘中使用实时拼接K线检查 OPEN；收盘后可使用已落库日K。 */
     public int checkOpenTrades(boolean realtime) {
         List<SignalTradeTrack> openTracks =
@@ -143,6 +188,13 @@ public class TradeTrackService {
                                 : indicatorService.compute(code));
                 TradeTrackEvaluation evaluation = evaluator.evaluate(track, series, !realtime);
                 apply(track, evaluation);
+                if (realtime && track.getStatus() == TradeTrackStatus.OPEN
+                        && series != null && !series.isEmpty()
+                        && LocalDate.now().equals(series.last().getTradeDate())) {
+                    TradeTrackEvaluation softStop = evaluator.evaluateSoftStop(
+                            track, series.last(), LocalDateTime.now());
+                    apply(track, softStop);
+                }
                 track = trackRepository.save(track);
                 if (track.getStatus() != TradeTrackStatus.OPEN) {
                     changed++;
@@ -205,6 +257,7 @@ public class TradeTrackService {
         track.setExitPrice(null);
         track.setReturnPct(null);
         track.setHoldDays(0);
+        evaluator.clearSoftStopTimer(track);
         track.setExitNotified(false);
         track.setNotifyChannel(null);
     }
@@ -219,6 +272,7 @@ public class TradeTrackService {
             track.setExitDate(evaluation.getExitDate());
             track.setExitPrice(evaluation.getExitPrice());
             track.setReturnPct(evaluation.getReturnPct());
+            evaluator.clearSoftStopTimer(track);
         }
     }
 

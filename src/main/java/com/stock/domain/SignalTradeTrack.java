@@ -73,6 +73,14 @@ public class SignalTradeTrack {
     @Column(name = "hold_days")
     private Integer holdDays;
 
+    /** 实时价本轮连续低于止损价的起始时间。 */
+    @Column(name = "soft_stop_started_at")
+    private LocalDateTime softStopStartedAt;
+
+    /** 最近一次软止损监测时间，用于排除午休、停机等无行情间隔。 */
+    @Column(name = "soft_stop_last_checked_at")
+    private LocalDateTime softStopLastCheckedAt;
+
     /** 退出事件是否已成功投递至少一个渠道。 */
     @Column(name = "exit_notified")
     private boolean exitNotified;

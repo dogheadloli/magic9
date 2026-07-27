@@ -34,6 +34,12 @@ public class TradeTrackController {
         return tradeTrackService.rebuildAllFromFinalizedKlines();
     }
 
+    /** 仅将现有止损记录按“收盘价跌破止损价”规则重新计算。 */
+    @PostMapping("/repair-stop-losses-by-close")
+    public TradeTrackService.RebuildResult repairStopLossesByClose() {
+        return tradeTrackService.repairExistingStopLossesByClose();
+    }
+
     /** 手动触发状态检查；realtime=true 时拼接当日实时K线。 */
     @PostMapping("/check")
     public Map<String, Object> check(@RequestParam(defaultValue = "true") boolean realtime) {

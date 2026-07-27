@@ -66,6 +66,10 @@ strategy:
   bias:
     ma20-far: 15.0
     ma60-far: 25.0
+  trade-plan:
+    soft-stop-duration-minutes: 60      # 实时价连续低于止损价1小时后退出
+    soft-stop-max-check-gap-minutes: 10 # 午休、停机或漏扫后重新计时
+    hard-stop-below-pct: 2.0            # 跌至止损价下方2%立即退出
   combo-mode: SCORE          # SCORE 加权打分 / STRICT 严格四要素
   score-threshold: 0         # 除必备低9/高9外，命中加分项 >=2 预警，满3为强信号
 

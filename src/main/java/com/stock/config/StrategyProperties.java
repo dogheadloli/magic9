@@ -85,5 +85,11 @@ public class StrategyProperties {
         private double fallbackTpPct = 5.0;
         /** ATR 不可用时的兜底止损百分比 */
         private double fallbackSlPct = 5.0;
+        /** 实时价连续低于止损价达到该分钟数后触发软止损 */
+        private int softStopDurationMinutes = 60;
+        /** 两次监测超过该间隔视为不连续，软止损重新计时 */
+        private int softStopMaxCheckGapMinutes = 10;
+        /** 跌至止损价下方该百分比时立即触发硬止损 */
+        private double hardStopBelowPct = 2.0;
     }
 }
