@@ -1,10 +1,11 @@
-# 生产 / 服务器部署：应用容器化，MySQL 默认连宿主机（不迁库）
-# 用法：
-#   cp .env.example .env 并填写密钥
-#   IMAGE_TAG=abc1234 docker compose pull && docker compose up -d
+# 本地 / 服务器：Docker Compose（无 K8s）
+# 应用容器化；MySQL 使用宿主机，不进 Docker
+# 目录名为中文时：COMPOSE_PROJECT_NAME=stock-monitor
+name: stock-monitor
+
 services:
   app:
-    image: ${DOCKER_IMAGE:-stock-monitor}:${IMAGE_TAG:-latest}
+    image: ${DOCKER_IMAGE:-stock-monitor}:${IMAGE_TAG:-local}
     container_name: stock-monitor
     restart: unless-stopped
     ports:
@@ -12,10 +13,12 @@ services:
     env_file:
       - .env
     environment:
-      # 覆盖容器内连库地址：指向宿主机 MySQL（Linux Docker 20.10+）
+      # 容器内访问 Windows 宿主机 MySQL
       DB_URL: ${DB_URL:-jdbc:mysql://host.docker.internal:3306/stock?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true}
+      DB_USER: ${DB_USER:-root}
+      DB_PASS: ${DB_PASS:-}
       SERVER_PORT: "8964"
-      JAVA_OPTS: "${JAVA_OPTS:--Xms256m -Xmx512m}"
+      JAVA_OPTS: "${JAVA_OPTS:--Xms256m -Xmx512m -Duser.timezone=Asia/Shanghai}"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     logging:

@@ -107,8 +107,8 @@ function revRow(it, i) {
 
 function renderReview(d) {
     reviewData = d;
-    const losses = d.pageClosed - d.pageWins;
-    $('revStats').textContent = `· 共 ${d.totalElements} 个信号 · 本页 ${d.pageWins}胜/${losses}负`;
+    const losses = d.totalClosed - d.totalWins;
+    $('revStats').textContent = `· 共 ${d.totalElements} 个信号 · 全部 ${d.totalWins}胜/${losses}负`;
     const body = $('revBody');
     if (!d.items || !d.items.length) {
         body.innerHTML = `<tr><td class="muted" colspan="8">数据库暂无低9信号，请先在控制台执行扫描</td></tr>`;

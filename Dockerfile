@@ -9,6 +9,6 @@ RUN if [ "$SKIP_TESTS" = "true" ]; then mvn -B -DskipTests package; else mvn -B 
 FROM eclipse-temurin:8-jre
 WORKDIR /app
 COPY --from=build /build/target/stock-monitor.jar app.jar
-ENV JAVA_OPTS="-Xms256m -Xmx512m"
+ENV JAVA_OPTS="-Xms256m -Xmx512m -Duser.timezone=Asia/Shanghai"
 EXPOSE 8964
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar /app/app.jar"]

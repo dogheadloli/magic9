@@ -23,8 +23,9 @@ public final class AlertMessageFormatter {
         StringBuilder sb = new StringBuilder();
         sb.append("**<font color=\"").append(color).append("\">").append(title)
                 .append(" ").append(s.getScore()).append("/").append(s.getMaxScore()).append("</font>**\n");
-        sb.append("> 股票：**").append(nv(s.getName())).append("(").append(s.getCode()).append(")**\n");
-        sb.append("> 日期：").append(s.getTradeDate()).append("\n");
+        sb.append("> ").append(assetKind(s)).append("：**")
+                .append(nv(s.getName())).append("(").append(s.getCode()).append(")**\n");
+        sb.append("> 时间：").append(when(s)).append("\n");
         sb.append("> 命中：").append(String.join(" / ", s.getFactorLabels())).append("\n");
         Map<String, Object> d = s.getDetail();
         sb.append("> 收盘：").append(fmt(d.get("close")))
@@ -48,8 +49,8 @@ public final class AlertMessageFormatter {
         String title = (s.getType() == SignalType.BUY_LOW9 ? "低9抄底" : "高9逃顶")
                 + (s.isStrong() ? "(强信号)" : "");
         Map<String, Object> d = s.getDetail();
-        String base = String.format("[预警] %s %s(%s) %s 命中:%s 评分:%d/%d 收盘:%s 涨跌:%s%% MA20:%s MA60:%s",
-                title, nv(s.getName()), s.getCode(), s.getTradeDate(),
+        String base = String.format("[预警] %s %s %s(%s) %s 命中:%s 评分:%d/%d 收盘:%s 涨跌:%s%% MA20:%s MA60:%s",
+                title, assetKind(s), nv(s.getName()), s.getCode(), when(s),
                 String.join("/", s.getFactorLabels()), s.getScore(), s.getMaxScore(),
                 fmt(d.get("close")), fmt(d.get("changePct")), fmt(d.get("ma20")), fmt(d.get("ma60")));
         if (s.getType() == SignalType.BUY_LOW9 && s.getStopPrice() != null) {
@@ -128,8 +129,8 @@ public final class AlertMessageFormatter {
                 .append(title).append("　").append(s.getScore()).append("/").append(s.getMaxScore())
                 .append("</div>");
         sb.append("<div style=\"padding:16px 18px;font-size:14px;color:#333;line-height:1.9\">");
-        row(sb, "股票", nv(s.getName()) + " (" + s.getCode() + ")");
-        row(sb, "日期", String.valueOf(s.getTradeDate()));
+        row(sb, assetKind(s), nv(s.getName()) + " (" + s.getCode() + ")");
+        row(sb, "时间", when(s));
         row(sb, "命中要素", String.join(" / ", s.getFactorLabels()));
         row(sb, "收盘 / 涨跌", fmt(d.get("close")) + "　/　" + fmt(d.get("changePct")) + "%");
         row(sb, "MA20 / MA60", fmt(d.get("ma20")) + "　/　" + fmt(d.get("ma60")));
@@ -151,6 +152,25 @@ public final class AlertMessageFormatter {
     private static void row(StringBuilder sb, String k, String v) {
         sb.append("<div><span style=\"display:inline-block;width:120px;color:#888\">")
                 .append(k).append("</span>").append(v).append("</div>");
+    }
+
+    private static String assetKind(SignalResult s) {
+        return s.getAssetKind() == null || s.getAssetKind().trim().isEmpty() ? "股票" : s.getAssetKind();
+    }
+
+    private static String when(SignalResult s) {
+        StringBuilder sb = new StringBuilder();
+        if (s.getBarTime() != null) {
+            sb.append(s.getBarTime().toString().replace('T', ' '));
+        } else if (s.getTradeDate() != null) {
+            sb.append(s.getTradeDate());
+        } else {
+            sb.append("-");
+        }
+        if (s.getInterval() != null && !s.getInterval().trim().isEmpty()) {
+            sb.append(" · ").append(s.getInterval());
+        }
+        return sb.toString();
     }
 
     private static String nv(String v) {

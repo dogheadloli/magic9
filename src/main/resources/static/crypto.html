@@ -3,47 +3,48 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>神奇九转选股监控</title>
+    <title>币安现货 · 九转监控</title>
     <link rel="stylesheet" href="styles.css"/>
     <script src="vendor/klinecharts.min.js"></script>
 </head>
 <body>
-<header class="topbar">
-    <div class="brand">神奇九转选股监控</div>
+<header class="topbar crypto">
+    <div class="brand">币安现货 · 九转监控</div>
     <div class="actions">
         <span id="autoStatus" class="status"></span>
         <span id="status" class="status"></span>
-        <a class="navlink" href="crypto.html">币安现货 →</a>
-        <a class="navlink" href="analysis.html">买卖分析 →</a>
-        <button id="btnScan" class="btn btn-primary">实时扫描</button>
+        <a class="navlink" href="index.html">← 股票监控</a>
+        <button id="btnScan" class="btn btn-primary">立即扫描</button>
     </div>
 </header>
 
 <main class="layout">
-    <!-- 左侧：自选股管理 -->
     <aside class="panel pool-panel">
-        <h2>自选股池</h2>
+        <h2>现货监控池</h2>
         <form id="addForm" class="add-form">
-            <input id="codeInput" maxlength="6" placeholder="6位代码 如 600519" required/>
+            <input id="symbolInput" maxlength="20" placeholder="交易对 如 BTCUSDT" required/>
             <input id="groupInput" placeholder="分组(可选)"/>
             <button class="btn" type="submit">添加</button>
         </form>
         <div class="pool-list-wrap">
             <table class="tbl">
                 <thead>
-                <tr><th>代码</th><th>名称</th><th>市</th><th>状态</th><th>操作</th></tr>
+                <tr><th>交易对</th><th>名称</th><th>状态</th><th>操作</th></tr>
                 </thead>
                 <tbody id="poolBody"></tbody>
             </table>
         </div>
     </aside>
 
-    <!-- 中间：K线图 -->
     <section class="panel chart-panel">
         <div class="chart-head">
             <h2 id="chartTitle">K线图</h2>
             <div class="chart-actions">
-                <button id="btnBackfill" class="btn" disabled>回补日K</button>
+                <div class="interval-switch">
+                    <button type="button" id="btnD1" class="active" data-interval="D1">日K</button>
+                    <button type="button" id="btnH4" data-interval="H4">4小时</button>
+                </div>
+                <button id="btnBackfill" class="btn" disabled>回补K线</button>
                 <span class="legend">
                     <i class="dot low9"></i>低9 &nbsp;
                     <i class="dot high9"></i>高9 &nbsp;
@@ -53,53 +54,51 @@
             </div>
         </div>
         <div id="kline" class="kline"></div>
-        <div id="chartHint" class="hint">从左侧选择一只股票查看K线</div>
+        <div id="chartHint" class="hint">从左侧选择一个交易对查看K线</div>
     </section>
 
-    <!-- 右侧：AI诊股 + 舆情 -->
     <aside class="panel news-panel">
-        <h2>AI 诊股
-            <button id="btnDiag" class="btn btn-mini" style="float:right">诊断</button>
-            <span id="diagState" class="muted" style="font-weight:400;font-size:12px;"></span>
-        </h2>
-        <div id="diag" style="margin-bottom:10px">
-            <div class="muted">选择股票后点「诊断」</div>
+        <h2>实时行情 <span id="quoteName" class="muted" style="font-weight:400;font-size:12px;"></span></h2>
+        <div id="quoteBox" class="quote-grid">
+            <div class="muted" style="grid-column:1/-1">选择交易对后显示 24h 行情</div>
         </div>
-        <h2 style="border-top:1px solid var(--border);padding-top:10px">舆情 · AI判断
-            <button id="btnNews" class="btn btn-mini" style="float:right">刷新</button>
-            <span id="aiState" class="muted" style="font-weight:400;font-size:12px;"></span>
+        <h2 style="border-top:1px solid var(--border);padding-top:10px">当前信号
+            <span id="evalInterval" class="muted" style="font-weight:400;font-size:12px;"></span>
         </h2>
-        <div id="newsList" class="news-list-wrap">
-            <div class="muted">选择股票后自动加载新闻</div>
+        <div id="evalBox">
+            <div class="muted">选择交易对后评估当前周期</div>
         </div>
     </aside>
 </main>
 
-<!-- 底部：信号列表 -->
 <section class="panel signal-panel">
     <div class="signal-head">
         <h2>信号列表</h2>
         <div class="filters">
-            <input type="date" id="fltDate"/>
+            <select id="fltInterval">
+                <option value="">全部周期</option>
+                <option value="D1">日K</option>
+                <option value="H4">4小时</option>
+            </select>
             <select id="fltType">
                 <option value="">全部类型</option>
                 <option value="BUY_LOW9">低9抄底</option>
                 <option value="SELL_HIGH9">高9逃顶</option>
             </select>
-            <input id="fltCode" maxlength="6" placeholder="代码(可选)"/>
+            <input id="fltSymbol" maxlength="20" placeholder="交易对(可选)"/>
             <button id="btnQuery" class="btn">查询</button>
         </div>
     </div>
     <div class="signal-list-wrap">
         <table class="tbl">
             <thead>
-            <tr><th>日期</th><th>代码</th><th>名称</th><th>类型</th><th>评分</th><th>命中要素</th><th>已推送</th></tr>
+            <tr><th>时间(UTC)</th><th>周期</th><th>交易对</th><th>类型</th><th>评分</th><th>命中要素</th><th>已推送</th></tr>
             </thead>
             <tbody id="signalBody"></tbody>
         </table>
     </div>
 </section>
 
-<script src="app.js"></script>
+<script src="crypto.js"></script>
 </body>
 </html>

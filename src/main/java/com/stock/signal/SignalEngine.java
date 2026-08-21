@@ -107,7 +107,7 @@ public class SignalEngine {
     }
 
     private static double round(double v) {
-        return Math.round(v * 1000d) / 1000d;
+        return Math.round(v * 1e8d) / 1e8d;
     }
 
     private SignalResult composeSell(IndicatorSeries s, BarIndicator bar, int idx) {

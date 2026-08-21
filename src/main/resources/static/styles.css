@@ -22,6 +22,20 @@ body {
     color: #fff; display: flex; align-items: center; justify-content: space-between;
     padding: 0 18px; box-shadow: var(--shadow);
 }
+.topbar.crypto {
+    background: linear-gradient(90deg, #0f3d3e, #1a7f73);
+}
+.interval-switch { display: inline-flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+.interval-switch button {
+    height: 28px; padding: 0 10px; border: 0; background: #fff; cursor: pointer; font-size: 12px; color: var(--text);
+}
+.interval-switch button + button { border-left: 1px solid var(--border); }
+.interval-switch button.active { background: #1a7f73; color: #fff; }
+.quote-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px; margin-bottom: 12px; }
+.quote-grid .k { color: var(--muted); font-size: 12px; }
+.quote-grid .v { font-weight: 700; font-size: 15px; }
+.crypto-up { color: #26a69a; }
+.crypto-down { color: #ef5350; }
 .brand { font-size: 16px; font-weight: 700; letter-spacing: .5px; }
 .actions { display: flex; align-items: center; gap: 12px; }
 .status { font-size: 12px; opacity: .9; }

@@ -97,6 +97,9 @@ public class ReviewService {
         }
         rp.setPageClosed(closed);
         rp.setPageWins(wins);
+        rp.setTotalClosed(trackRepository.countByStatusNot(TradeTrackStatus.OPEN));
+        rp.setTotalWins(trackRepository.countByStatusNotAndReturnPctGreaterThan(
+                TradeTrackStatus.OPEN, 0d));
         return rp;
     }
 

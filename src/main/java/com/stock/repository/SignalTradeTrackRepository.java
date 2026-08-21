@@ -18,4 +18,8 @@ public interface SignalTradeTrackRepository extends JpaRepository<SignalTradeTra
     List<SignalTradeTrack> findByStatusOrderBySignalDateAsc(TradeTrackStatus status);
 
     List<SignalTradeTrack> findByExitNotifiedFalseAndStatusNotOrderByExitDateAsc(TradeTrackStatus status);
+
+    long countByStatusNot(TradeTrackStatus status);
+
+    long countByStatusNotAndReturnPctGreaterThan(TradeTrackStatus status, Double returnPct);
 }

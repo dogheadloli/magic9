@@ -3,6 +3,7 @@ package com.stock.indicator;
 import lombok.Data;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * 单根K线的指标快照（用于信号判断与前端绘图）。
@@ -11,11 +12,15 @@ import java.time.LocalDate;
 @Data
 public class BarIndicator {
     private LocalDate tradeDate;
+    /** 开盘时间（加密 4H 等日内周期使用；股票日K可为空） */
+    private LocalDateTime openTime;
+    /** UTC 开盘毫秒时间戳，供前端绘图 */
+    private Long openTimeMs;
     private double open;
     private double high;
     private double low;
     private double close;
-    private long volume;
+    private double volume;
     private Double changePct;
 
     private int tdBuySetup;

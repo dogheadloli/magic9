@@ -88,6 +88,23 @@ schedule:
   prefetch-history-cron: "0 15 9 * * MON-FRI"   # 盘前回补历史日K
   eod-finalize-cron: "0 5 15 * * MON-FRI"        # 收盘后定稿当日K线落库
 
+# 币安现货（独立页面 /api/crypto，与 A 股池隔离）
+crypto:
+  enabled: ${CRYPTO_ENABLED:true}
+  hold-calendar-days: 15
+  binance:
+    base-url: ${CRYPTO_BINANCE_BASE:https://api.binance.com}
+  fetch:
+    history-bars-daily: 250
+    history-bars-4h: 360
+    live-bars: 5
+  scan:
+    enabled: true
+    interval-ms: 300000
+    rate-per-second: 4
+    retry: 3
+    thread-pool-size: 4
+
 # 预警输出（企业微信机器人 / 邮件）
 alert:
   channels:

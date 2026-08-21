@@ -5,6 +5,8 @@ import com.stock.domain.KlineDaily;
 import com.stock.repository.KlineDailyRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,19 +41,36 @@ public class IndicatorService {
     }
 
     public IndicatorSeries compute(String code, List<KlineDaily> klines) {
-        int n = klines.size();
+        List<PriceBar> bars = new ArrayList<>(klines.size());
+        for (KlineDaily k : klines) {
+            PriceBar p = new PriceBar();
+            p.setTradeDate(k.getTradeDate());
+            p.setOpen(toD(k.getOpen()));
+            p.setHigh(toD(k.getHigh()));
+            p.setLow(toD(k.getLow()));
+            p.setClose(toD(k.getClose()));
+            p.setVolume(k.getVolume() != null ? k.getVolume() : 0d);
+            p.setChangePct(k.getChangePct() != null ? k.getChangePct().doubleValue() : null);
+            bars.add(p);
+        }
+        return computeFrom(code, bars);
+    }
+
+    /** 由通用 OHLC 序列计算指标（股票日K / 加密货币多周期）。 */
+    public IndicatorSeries computeFrom(String code, List<PriceBar> inputs) {
+        int n = inputs.size();
         double[] close = new double[n];
         double[] high = new double[n];
         double[] low = new double[n];
         double[] open = new double[n];
         double[] volume = new double[n];
         for (int i = 0; i < n; i++) {
-            KlineDaily k = klines.get(i);
-            close[i] = toD(k.getClose());
-            high[i] = toD(k.getHigh());
-            low[i] = toD(k.getLow());
-            open[i] = toD(k.getOpen());
-            volume[i] = k.getVolume() != null ? k.getVolume() : 0d;
+            PriceBar k = inputs.get(i);
+            close[i] = k.getClose();
+            high[i] = k.getHigh();
+            low[i] = k.getLow();
+            open[i] = k.getOpen();
+            volume[i] = k.getVolume();
         }
 
         Td9Calculator.Result td = Td9Calculator.compute(close, props.getTdSetupLength());
@@ -67,15 +86,17 @@ public class IndicatorService {
 
         List<BarIndicator> bars = new ArrayList<>(n);
         for (int i = 0; i < n; i++) {
-            KlineDaily k = klines.get(i);
+            PriceBar k = inputs.get(i);
             BarIndicator b = new BarIndicator();
             b.setTradeDate(k.getTradeDate());
+            b.setOpenTime(k.getOpenTime());
+            b.setOpenTimeMs(toEpochMs(k.getOpenTime()));
             b.setOpen(open[i]);
             b.setHigh(high[i]);
             b.setLow(low[i]);
             b.setClose(close[i]);
-            b.setVolume((long) volume[i]);
-            b.setChangePct(k.getChangePct() != null ? k.getChangePct().doubleValue() : null);
+            b.setVolume(volume[i]);
+            b.setChangePct(k.getChangePct());
             b.setTdBuySetup(td.buySetup[i]);
             b.setTdSellSetup(td.sellSetup[i]);
             b.setTdSignal(td.signal[i]);
@@ -123,6 +144,10 @@ public class IndicatorService {
             }
         }
         return out;
+    }
+
+    private static Long toEpochMs(LocalDateTime time) {
+        return time == null ? null : time.toInstant(ZoneOffset.UTC).toEpochMilli();
     }
 
     private static double toD(java.math.BigDecimal v) {

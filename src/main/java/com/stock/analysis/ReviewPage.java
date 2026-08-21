@@ -18,4 +18,7 @@ public class ReviewPage {
     /** 本页已了结笔数 / 其中盈利笔数（用于展示本页胜负） */
     private int pageClosed;
     private int pageWins;
+    /** 所有低9信号中已了结笔数 / 其中盈利笔数 */
+    private long totalClosed;
+    private long totalWins;
 }

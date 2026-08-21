@@ -3,6 +3,7 @@ package com.stock.signal;
 import lombok.Data;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -16,7 +17,12 @@ import java.util.stream.Collectors;
 public class SignalResult {
     private String code;
     private String name;
+    /** 资产类别，默认股票；加密货币为「币安现货」等 */
+    private String assetKind = "股票";
+    /** 周期，如 D1 / H4；股票日K可为空 */
+    private String interval;
     private LocalDate tradeDate;
+    private LocalDateTime barTime;
     private SignalType type;
     private int score;
     private int maxScore;
